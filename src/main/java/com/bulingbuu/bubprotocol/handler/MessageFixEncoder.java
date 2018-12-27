@@ -38,7 +38,15 @@ public class MessageFixEncoder extends MessageToByteEncoder<byte[]> {
 
         }
 
-        byteBuf.writeByte(checkByte);
+        //校验码转义
+        if (checkByte == NettyConstant.byte_7d) {
+            byteBuf.writeShort(NettyConstant.byte_ret_7d);
+        } else if (checkByte == NettyConstant.byte_7e) {
+            byteBuf.writeShort(NettyConstant.byte_ret_7e);
+        } else {
+            byteBuf.writeByte(checkByte);
+        }
+
         byteBuf.writeByte(NettyConstant.IDENTIFIER);
     }
 }

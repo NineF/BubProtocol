@@ -3,6 +3,7 @@ package com.bulingbuu.bubprotocol.handler;
 import com.bulingbuu.bubprotocol.bean.Message;
 import com.bulingbuu.bubprotocol.constant.NettyConstant;
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +21,6 @@ public class MessageWrapperDecoder extends ByteToMessageDecoder {
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
-        log.info("MessageWrapperDecoder");
         short msgId = in.readShort();
         short bodyAttr = in.readShort();
 

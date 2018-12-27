@@ -32,7 +32,7 @@ public class MessageWrapperEncoder extends MessageToMessageEncoder<PackageData> 
 
     @Override
     protected void encode(ChannelHandlerContext ctx, PackageData msg, List<Object> out) throws Exception {
-        log.info("开始包装消息");
+//        log.info("开始包装消息");
         List<byte[]> bytes = wrapperMsg(msg);
         log.info("封装结束,消息ID={},消息总包数={}", msg.getMsgId(), bytes.size());
         out.addAll(bytes);
@@ -86,8 +86,7 @@ public class MessageWrapperEncoder extends MessageToMessageEncoder<PackageData> 
 
             return list;
         }
-        //分包信息缓存
-        log.info("开始分包");
+        //分包
         short pkgSize = (short) (bodyLen / NettyConstant.MAX_BODY_LENGTH + 1);
         short lastBodyLen = (short) (bodyLen % NettyConstant.MAX_BODY_LENGTH);
         short msgNum = (short) num.getAndAdd(pkgSize);

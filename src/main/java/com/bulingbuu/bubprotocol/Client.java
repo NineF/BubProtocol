@@ -20,34 +20,43 @@ import io.netty.handler.codec.DelimiterBasedFrameDecoder;
 public class Client {
 
     public static void main(String[] args) throws InterruptedException {
+        MessageWrapperEncoder messageWrapperEncoder=new MessageWrapperEncoder();
 
+        for(int i=0;i<10;i++){
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    Bootstrap bootstrap = new Bootstrap();
+                    EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+                    bootstrap.group(bossGroup).channel(NioSocketChannel.class)
+                            .handler(new ChannelInitializer<SocketChannel>() {
+                                @Override
+                                protected void initChannel(SocketChannel ch) throws Exception {
+                                    ChannelPipeline pipeline = ch.pipeline();
+                                    pipeline.addLast(
+                                            new DelimiterBasedFrameDecoder(1024, Unpooled.copiedBuffer(new byte[]{0x7e})));
 
-        Bootstrap bootstrap = new Bootstrap();
-        EventLoopGroup bossGroup = new NioEventLoopGroup(1);
-        bootstrap.group(bossGroup).channel(NioSocketChannel.class)
-                .handler(new ChannelInitializer<SocketChannel>() {
+                                    pipeline.addLast(new MessageFixDecoder());
+                                    pipeline.addLast(new MessageFixEncoder());
 
-                    @Override
-                    protected void initChannel(SocketChannel ch) throws Exception {
-                        ChannelPipeline pipeline = ch.pipeline();
-                        pipeline.addLast(
-                                new DelimiterBasedFrameDecoder(1024, Unpooled.copiedBuffer(new byte[]{0x7e}),
-                                        Unpooled.copiedBuffer(new byte[]{0x7e, 0x7e})));
+                                    pipeline.addLast(new MessageWrapperDecoder());
+                                    pipeline.addLast(new PackageAggregator());
+                                    pipeline.addLast(messageWrapperEncoder);
+                                    pipeline.addLast(new EchoHandler());
+                                }
+                            });
 
-                        pipeline.addLast(new MessageUnFixDecoder());
-                        pipeline.addLast(new MessageFixEncoder());
-
-                        pipeline.addLast(new MessageWrapperDecoder());
-                        pipeline.addLast(new PackageAggregator());
-                        pipeline.addLast(new MessageWrapperEncoder());
-                        pipeline.addLast(new EchoHandler());
+                    ChannelFuture channelFuture = null;
+                    try {
+                        channelFuture = bootstrap.connect(NettyConstant.REMOTEIP, NettyConstant.PORT).sync();
+                        channelFuture.channel().closeFuture().sync();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
                     }
-                });
-
-        ChannelFuture channelFuture = bootstrap.connect(NettyConstant.REMOTEIP, NettyConstant.PORT).sync();
-
-        channelFuture.channel().closeFuture().sync();
-
+                }
+            }
+            ).start();
+        }
 
     }
 }

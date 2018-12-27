@@ -16,7 +16,7 @@ import java.util.List;
  * 转义还原.验证校验码
  */
 @Slf4j
-public class MessageUnFixDecoder extends ByteToMessageDecoder {
+public class MessageFixDecoder extends ByteToMessageDecoder {
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
         int length = in.readableBytes();
@@ -33,19 +33,29 @@ public class MessageUnFixDecoder extends ByteToMessageDecoder {
         ByteBuf byteBuf = Unpooled.buffer();
 
         byte checkByte = 0;
+        byte oldCheckByte = bs[bs.length - 1];
         for (int i = 0; i < bs.length - 1; i++) {
             byte b = bs[i];
 
             if (b == NettyConstant.byte_7d) {
                 i++;
                 b = bs[i];
-                if (b == NettyConstant.byte_01) {
-                    byteBuf.writeByte(NettyConstant.byte_7d);
 
-                    checkByte ^= NettyConstant.byte_7d;
+                if (b == NettyConstant.byte_01) {
+                    //校验位是特殊字符
+                    if (i == bs.length - 1) {
+                        oldCheckByte = NettyConstant.byte_7d;
+                    } else {
+                        byteBuf.writeByte(NettyConstant.byte_7d);
+                        checkByte ^= NettyConstant.byte_7d;
+                    }
                 } else if (b == NettyConstant.byte_02) {
-                    byteBuf.writeByte(NettyConstant.byte_7e);
-                    checkByte ^= NettyConstant.byte_7e;
+                    if (i == bs.length - 1) {
+                        oldCheckByte = NettyConstant.byte_7e;
+                    } else {
+                        byteBuf.writeByte(NettyConstant.byte_7e);
+                        checkByte ^= NettyConstant.byte_7e;
+                    }
                 } else {
                     log.error("有错");
                     return;
@@ -55,7 +65,7 @@ public class MessageUnFixDecoder extends ByteToMessageDecoder {
             checkByte ^= b;
             byteBuf.writeByte(b);
         }
-        if (checkByte != bs[bs.length - 1]) {
+        if (checkByte != oldCheckByte) {
             log.error("检验码不通过");
             return;
         }

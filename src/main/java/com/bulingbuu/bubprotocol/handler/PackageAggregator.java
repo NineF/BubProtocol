@@ -17,7 +17,7 @@ import java.util.Map;
  * @author bulingbuu
  * @date 18-12-17 下午4:49
  * <p>
- * 分包聚合
+ * 分包聚合，需要确定netty是否按照顺序接收消息
  */
 @Slf4j
 public class PackageAggregator extends MessageToMessageDecoder<Message> {
@@ -37,24 +37,23 @@ public class PackageAggregator extends MessageToMessageDecoder<Message> {
             out.add(data);
             return;
         }
-        log.info("分包聚合");
         short msgNum = msg.getMsgNum();
         short pkgNum = msg.getPkgNum();
         short msgIndexNum = (short) (msgNum - pkgNum + 1);
 
-        //不属于重传包
         if (!bufMap.containsKey(msgIndexNum)) {
-            PackageBuf packageBuf = new PackageBuf(msg.getPkgSize());
-            packageBuf.addMessage(msg);
-            bufMap.put(msgIndexNum, packageBuf);
+            //不是第一个包不处理
+            if (msg.getPkgNum() != 1) {
+                PackageBuf packageBuf = new PackageBuf(msg.getPkgSize());
+                packageBuf.addMessage(msg);
+                bufMap.put(msgIndexNum, packageBuf);
+            }
         } else {
             PackageBuf packageBuf = bufMap.get(msgIndexNum);
-            int ret = packageBuf.addMessage(msg);
+            int ret = packageBuf.addMessage0(msg);
             if (ret == 0) {
                 bufMap.remove(msgIndexNum);
-
                 byte[] bytes = packageBuf.getBufArray();
-
                 PackageData data = new PackageData();
                 data.setTarget(msg.getTarget());
                 data.setEncryp(msg.getEncryp());
@@ -64,7 +63,8 @@ public class PackageAggregator extends MessageToMessageDecoder<Message> {
 
                 out.add(data);
             } else if (ret > 0) {
-                log.info("发起重传指令");
+                bufMap.remove(msgIndexNum);
+                log.info("netty保证消息顺序发送，tcp保证消息顺序达到，这里出错丢弃消息");
             }
         }
 
@@ -104,7 +104,6 @@ public class PackageAggregator extends MessageToMessageDecoder<Message> {
                     }
                     i++;
                 }
-
                 byteBufs.addComponent(true, pkgNum - j - 1, body);
             } else {
                 log.info("包序号相同,不处理");
@@ -123,6 +122,29 @@ public class PackageAggregator extends MessageToMessageDecoder<Message> {
             lastNum = pkgNum;
             index |= (1 << pkgNum);
 
+            return -1;
+        }
+
+        /**
+         * 消息理论上应该顺序到达
+         * 暂不确定
+         *
+         * @param message
+         * @return
+         */
+        public int addMessage0(Message message) {
+            int pkgNum = message.getPkgNum();
+            ByteBuf body = Unpooled.wrappedBuffer(message.getBody());
+            //顺序接收
+            byteBufs.addComponent(true, body);
+            if (currentSize == maxSize) {
+                //接收完成
+                return 0;
+            }
+            if (pkgNum == maxSize) {
+                return 1;
+            }
+            currentSize++;
             return -1;
         }
 
