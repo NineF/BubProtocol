@@ -16,4 +16,47 @@
         </root>
     </springProfile>
 
+    <springProfile name="product">
+        <appender name="File" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <File>../log/bub/all.log</File>
+            <encoder>
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            </encoder>
+            <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+                <level>INFO</level>
+            </filter>
+            <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+                <fileNamePattern>../log/bub/all.%i.log.zip</fileNamePattern>
+                <minIndex>1</minIndex>
+                <maxIndex>21</maxIndex>
+            </rollingPolicy>
+            <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+                <MaxFileSize>10MB</MaxFileSize>
+            </triggeringPolicy>
+        </appender>
+        <appender name="allError" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <File>../log/bub/error.log</File>
+            <encoder>
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            </encoder>
+            <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+                <level>ERROR</level>
+            </filter>
+            <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+                <fileNamePattern>../log/bub/error.%i.log.zip</fileNamePattern>
+                <minIndex>1</minIndex>
+                <maxIndex>21</maxIndex>
+            </rollingPolicy>
+            <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+                <MaxFileSize>10MB</MaxFileSize>
+            </triggeringPolicy>
+        </appender>
+        <logger name="org.springframework.scheduling" level="INFO"/>
+        <root level="INFO">
+            <appender-ref ref="File"/>
+            <appender-ref ref="allError"/>
+        </root>
+
+    </springProfile>
+
 </configuration>

@@ -43,9 +43,9 @@ public class PackageAggregator extends MessageToMessageDecoder<Message> {
 
         if (!bufMap.containsKey(msgIndexNum)) {
             //不是第一个包不处理
-            if (msg.getPkgNum() != 1) {
+            if (msg.getPkgNum() == 1) {
                 PackageBuf packageBuf = new PackageBuf(msg.getPkgSize());
-                packageBuf.addMessage(msg);
+                packageBuf.addMessage0(msg);
                 bufMap.put(msgIndexNum, packageBuf);
             }
         } else {
@@ -60,7 +60,6 @@ public class PackageAggregator extends MessageToMessageDecoder<Message> {
                 data.setMsgId(msg.getMsgId());
                 data.setSource(msg.getSource());
                 data.setBody(bytes);
-
                 out.add(data);
             } else if (ret > 0) {
                 bufMap.remove(msgIndexNum);
@@ -137,6 +136,7 @@ public class PackageAggregator extends MessageToMessageDecoder<Message> {
             ByteBuf body = Unpooled.wrappedBuffer(message.getBody());
             //顺序接收
             byteBufs.addComponent(true, body);
+            currentSize++;
             if (currentSize == maxSize) {
                 //接收完成
                 return 0;
@@ -144,7 +144,6 @@ public class PackageAggregator extends MessageToMessageDecoder<Message> {
             if (pkgNum == maxSize) {
                 return 1;
             }
-            currentSize++;
             return -1;
         }
 

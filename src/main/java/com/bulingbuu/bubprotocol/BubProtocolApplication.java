@@ -8,6 +8,7 @@ public class BubProtocolApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(BubProtocolApplication.class, args);
+        new Server().bind();
     }
 
 }

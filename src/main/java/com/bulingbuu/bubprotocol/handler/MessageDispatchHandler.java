@@ -55,5 +55,7 @@ public class MessageDispatchHandler extends SimpleChannelInboundHandler<PackageD
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, PackageData msg) throws Exception {
         log.info(msg.toString());
+        Thread.sleep(1000);
+        ctx.writeAndFlush(msg);
     }
 }

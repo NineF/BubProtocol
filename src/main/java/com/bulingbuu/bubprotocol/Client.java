@@ -22,7 +22,7 @@ public class Client {
     public static void main(String[] args) throws InterruptedException {
         MessageWrapperEncoder messageWrapperEncoder=new MessageWrapperEncoder();
 
-        for(int i=0;i<10;i++){
+        for(int i=0;i<5;i++){
             new Thread(new Runnable() {
                 @Override
                 public void run() {
